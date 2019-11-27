@@ -1,5 +1,5 @@
 {
-  "name": "redux-saga-helper",
+  "name": "@wuwei-hx/redux-saga-helper",
   "version": "0.1.0",
   "description": "helpers used with redux-saga",
   "main": "index.js",
