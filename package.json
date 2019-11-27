@@ -1,7 +1,7 @@
 {
   "name": "redux-saga-helper",
   "version": "0.1.0",
-  "description": "",
+  "description": "helpers used with redux-saga",
   "main": "index.js",
   "scripts": {
     "dev": "tsc --watch",
@@ -11,6 +11,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wuwei-hx/redux-saga-helper.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "author": "David Wu",
   "license": "ISC",
