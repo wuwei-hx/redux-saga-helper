@@ -1,0 +1,15 @@
+{
+  "version": "2.0.2",
+  "compilerOptions": {
+    "lib": ["es5", "es6", "dom"],
+    "target": "es6",
+    "module": "es2015",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "outDir": "lib"
+  },
+  "exclude": ["node_modules"]
+}

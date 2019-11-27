@@ -1,0 +1,23 @@
+{
+  "name": "redux-saga-helper",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wuwei-hx/redux-saga-helper.git"
+  },
+  "author": "David Wu",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.7.2"
+  },
+  "dependencies": {
+    "redux-saga": "^1.1.3"
+  }
+}
