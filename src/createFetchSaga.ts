@@ -2,21 +2,17 @@ import { put, call, apply, select } from "redux-saga/effects";
 
 const createFetchSaga = ({
   onFetch,
-  onSuccess,
-  onFailure,
+  onSuccess = function*(response) {
+    yield put(asyncActions.success(response));
+  },
+  onFailure = function*(error) {
+    yield put(asyncActions.failure(error));
+  },
   asyncActions,
-  getIsFetching
+  getIsFetching,
+  getToken
 }) =>
   function* fetchSaga(action) {
-    if (!onSuccess)
-      onSuccess = function*(response) {
-        yield put(asyncActions.success(response));
-      };
-    if (!onFailure)
-      onFailure = function*(error) {
-        yield put(asyncActions.failure(error));
-      };
-
     if (getIsFetching && (yield select(getIsFetching))) return;
 
     yield put(asyncActions.request(action.payload));
@@ -26,7 +22,8 @@ const createFetchSaga = ({
     // 不捕捉，只处理response内的错误信息
     try {
       // const resp = yield* fetchCall(action);
-      const resp = yield call(onFetch, action);
+      const token = getToken ? yield select(getToken) : undefined;
+      const resp = yield call(onFetch, action, token);
 
       /// test code
       console.log("resp", resp);
