@@ -2,12 +2,8 @@ import { put, call, apply, select } from "redux-saga/effects";
 
 const createFetchSaga = ({
   onFetch,
-  onSuccess = function*(response) {
-    yield put(asyncActions.success(response));
-  },
-  onFailure = function*(error) {
-    yield put(asyncActions.failure(error));
-  },
+  onSuccess = response => response,
+  onFailure = error => error,
   asyncActions,
   getIsFetching,
   getToken
@@ -38,8 +34,8 @@ const createFetchSaga = ({
           error = { error: "无法连接服务器，请稍后重试", meta: "notOK" };
         else error = { error: `${resp.status}: ${resp.statusText}` };
 
-        yield call(onFailure, error);
-        // yield put(asyncActions.failure(error));
+        // yield call(onFailure, error);
+        yield put(asyncActions.failure(onFailure(error)));
         return;
       }
 
@@ -47,19 +43,21 @@ const createFetchSaga = ({
       const respJson = yield apply(resp, resp.json, []);
       console.log("respJson", respJson);
       console.log("end calling apply...");
-      // yield put(asyncActions.success(respJson));
-      yield call(onSuccess, respJson);
+      yield put(asyncActions.success(onSuccess(respJson)));
+      // yield call(onSuccess, respJson);
     } catch (err) {
-      // yield put(
-      //   asyncActions.failure({
-      //     error: "无法连接服务器，请稍后重试",
-      //     meta: "catch"
-      //   })
-      // );
-      yield call(onFailure, {
-        error: "无法连接服务器，请稍后重试",
-        meta: "catch"
-      });
+      yield put(
+        asyncActions.failure(
+          onFailure({
+            error: "无法连接服务器，请稍后重试",
+            meta: "catch"
+          })
+        )
+      );
+      // yield call(onFailure, {
+      //   error: "无法连接服务器，请稍后重试",
+      //   meta: "catch"
+      // });
       console.log("err", err);
     }
   };
