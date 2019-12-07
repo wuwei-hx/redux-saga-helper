@@ -10,24 +10,32 @@ const createFetchSaga = ({
   getToken,
   verbose = false
 }) => {
-  function* handleResponse(response: Response) {
+  function* handleResponse(response: Response, respJson: { Message?: string }) {
     if (!response.ok) {
-      // statuscode = 400代表用户名、密码错误
-      // todo: 确认一下符合http status code含义
-      let error;
-      if (response.status === 401) error = { error: "操作未授权" };
-      else if (response.status === 500)
-        error = { error: "无法连接服务器，请稍后重试", meta: "notOK" };
-      else error = { error: `${response.status}: ${response.statusText}` };
+      // statuscode
+      // 401: 代表用户名、密码错误
+      // 500: server error
+      // 400: bad request
+      let msg;
+      if (response.status === 401) msg = "操作未授权";
+      else if (response.status === 500) msg = "无法连接服务器，请稍后重试";
+      else if (response.status === 400) msg = respJson.Message || "Bad Request";
+      else msg = respJson.Message;
 
+      let error = {
+        type: "http error",
+        originResponse: respJson,
+        status: response.status,
+        statusText: response.statusText,
+        msg
+      };
+
+      if (verbose) console.log("onFailure", error);
       yield put(asyncActions.failure(onFailure(error)));
       return;
     }
 
-    console.log("calling apply...");
-    const respJson = yield apply(response, response.json, []);
-    console.log("respJson", respJson);
-    console.log("end calling apply...");
+    if (verbose) console.log("onSuccess", respJson);
     yield put(asyncActions.success(onSuccess(respJson)));
   }
 
@@ -43,36 +51,37 @@ const createFetchSaga = ({
       const token = getToken ? yield select(getToken) : undefined;
       const resp = yield call(onFetch, action, token);
 
-      if (verbose) console.log("resp", resp);
+      if (verbose) console.log("response", resp);
+
+      const respJson = yield apply(resp, resp.json, []);
 
       if (onResponse && typeof onResponse === "function") {
-        const result = yield* onResponse(resp);
+        const result = yield* onResponse(resp, respJson);
 
         if (result && result.error) {
+          if (verbose) console.log("onFailure", result.error);
           yield put(asyncActions.failure(onFailure(result)));
           return;
         }
 
         if (result) {
+          if (verbose) console.log("onSuccess", result);
           yield put(asyncActions.success(onSuccess(result)));
           return;
         }
+      } else {
+        yield* handleResponse(resp, respJson);
+        return;
       }
-      yield* handleResponse(resp);
     } catch (err) {
-      yield put(
-        asyncActions.failure(
-          onFailure({
-            error: "无法连接服务器，请稍后重试",
-            meta: "catch"
-          })
-        )
-      );
-      // yield call(onFailure, {
-      //   error: "无法连接服务器，请稍后重试",
-      //   meta: "catch"
-      // });
-      console.log("err", err);
+      let error = {
+        type: "network error",
+        msg: "无法连接服务器，请稍后重试",
+        originError: err
+      };
+
+      if (verbose) console.log("error", error);
+      yield put(asyncActions.failure(onFailure(error)));
     }
   };
 };
