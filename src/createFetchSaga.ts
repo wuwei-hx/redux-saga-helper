@@ -3,14 +3,18 @@ import { put, call, apply, select } from "redux-saga/effects";
 const createFetchSaga = ({
   onFetch,
   onResponse,
-  onSuccess = response => response,
-  onFailure = error => error,
+  onSuccess = (response, action) => response,
+  onFailure = (error, action) => error,
   asyncActions,
   getIsFetching,
   getToken,
   verbose = false
 }) => {
-  function* handleResponse(response: Response, respJson: { Message?: string }) {
+  function* handleResponse(
+    response: Response,
+    respJson: { Message?: string },
+    action
+  ) {
     if (!response.ok) {
       // statuscode
       // 401: 代表用户名、密码错误
@@ -30,13 +34,13 @@ const createFetchSaga = ({
         msg
       };
 
-      if (verbose) console.log("onFailure", error);
-      yield put(asyncActions.failure(onFailure(error)));
+      if (verbose) console.log("onFailure", error, action);
+      yield put(asyncActions.failure(onFailure(error, action)));
       return;
     }
 
-    if (verbose) console.log("onSuccess", respJson);
-    yield put(asyncActions.success(onSuccess(respJson)));
+    if (verbose) console.log("onSuccess", respJson, action);
+    yield put(asyncActions.success(onSuccess(respJson, action)));
   }
 
   return function* fetchSaga(action) {
@@ -59,18 +63,18 @@ const createFetchSaga = ({
         const result = yield* onResponse(resp, respJson);
 
         if (result && result.error) {
-          if (verbose) console.log("onFailure", result.error);
-          yield put(asyncActions.failure(onFailure(result)));
+          if (verbose) console.log("onFailure", result.error, action);
+          yield put(asyncActions.failure(onFailure(result, action)));
           return;
         }
 
         if (result) {
-          if (verbose) console.log("onSuccess", result);
-          yield put(asyncActions.success(onSuccess(result)));
+          if (verbose) console.log("onSuccess", result, action);
+          yield put(asyncActions.success(onSuccess(result, action)));
           return;
         }
       } else {
-        yield* handleResponse(resp, respJson);
+        yield* handleResponse(resp, respJson, action);
         return;
       }
     } catch (err) {
@@ -80,8 +84,8 @@ const createFetchSaga = ({
         originError: err
       };
 
-      if (verbose) console.log("error", error);
-      yield put(asyncActions.failure(onFailure(error)));
+      if (verbose) console.log("error", error, action);
+      yield put(asyncActions.failure(onFailure(error, action)));
     }
   };
 };
