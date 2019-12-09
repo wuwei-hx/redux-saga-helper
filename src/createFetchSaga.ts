@@ -5,7 +5,7 @@ const createFetchSaga = ({
   onResponse,
   onSuccess = (response, action) => response,
   onFailure = (error, action) => error,
-  onExit = () => {},
+  onExit = action => {},
   asyncActions,
   getIsFetching,
   getToken,
@@ -46,7 +46,7 @@ const createFetchSaga = ({
 
   return function* fetchSaga(action) {
     if (getIsFetching && (yield select(getIsFetching))) {
-      onExit();
+      onExit(action);
       return;
     }
 
@@ -91,7 +91,7 @@ const createFetchSaga = ({
       if (verbose) console.log("error", error, action);
       yield put(asyncActions.failure(onFailure(error, action)));
     } finally {
-      onExit();
+      onExit(action);
     }
   };
 };
