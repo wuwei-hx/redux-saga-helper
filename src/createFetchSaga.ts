@@ -5,9 +5,10 @@ const createFetchSaga = ({
   onResponse,
   onSuccess = (response, action) => response,
   onFailure = (error, action) => error,
-  onExit = action => {},
+  onExit = (error, action) => error,
   asyncActions,
   getIsFetching,
+  getError,
   getToken,
   verbose = false
 }) => {
@@ -45,10 +46,8 @@ const createFetchSaga = ({
   }
 
   return function* fetchSaga(action) {
-    if (getIsFetching && (yield select(getIsFetching))) {
-      onExit(action);
-      return;
-    }
+    if (getIsFetching && (yield select(getIsFetching)))
+      return onExit(getError ? yield select(getError) : undefined, action);
 
     yield put(asyncActions.request(action.payload));
 
@@ -58,10 +57,10 @@ const createFetchSaga = ({
     try {
       const token = getToken ? yield select(getToken) : undefined;
       const resp = yield call(onFetch, action, token);
-
       if (verbose) console.log("response", resp);
 
       const respJson = yield apply(resp, resp.json, []);
+      if (verbose) console.log("respJson", respJson);
 
       if (onResponse && typeof onResponse === "function") {
         const result = yield* onResponse(resp, respJson, action);
@@ -69,17 +68,12 @@ const createFetchSaga = ({
         if (result && result.error) {
           if (verbose) console.log("onFailure", result.error, action);
           yield put(asyncActions.failure(onFailure(result, action)));
-          return;
-        }
-
-        if (result) {
+        } else {
           if (verbose) console.log("onSuccess", result, action);
           yield put(asyncActions.success(onSuccess(result, action)));
-          return;
         }
       } else {
         yield* handleResponse(resp, respJson, action);
-        return;
       }
     } catch (err) {
       let error = {
@@ -90,9 +84,9 @@ const createFetchSaga = ({
 
       if (verbose) console.log("error", error, action);
       yield put(asyncActions.failure(onFailure(error, action)));
-    } finally {
-      onExit(action);
     }
+
+    return onExit(getError ? yield select(getError) : undefined, action);
   };
 };
 export default createFetchSaga;
