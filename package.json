@@ -1,6 +1,6 @@
 {
   "name": "@wuwei-hx/redux-saga-helper",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "helpers used with redux-saga",
   "main": "index.js",
   "scripts": {
